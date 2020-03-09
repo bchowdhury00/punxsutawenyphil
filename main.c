@@ -10,7 +10,7 @@
 #include "parser.h"
 
 int main(int argc, char **argv) {
-
+/*
   screen s;
   struct matrix * edges;
   struct matrix * transform;
@@ -23,14 +23,18 @@ int main(int argc, char **argv) {
   /* print_matrix(make_rotY(M_PI/4)); */
   /* printf("\n"); */
   /* print_matrix(make_rotZ(M_PI/4)); */
-  /* printf("\n"); */
+  /* printf("\n"); *
 
   if ( argc == 2 )
     parse_file( argv[1], transform, edges, s );
   else
     parse_file( "stdin", transform, edges, s );
 
-  
+
   free_matrix( edges );
-  free_matrix( transform );
-}  
+  free_matrix( transform )
+  */
+  struct matrix * edges = make_bezier();
+  print_matrix(edges);
+  free_matrix(edges);
+}
