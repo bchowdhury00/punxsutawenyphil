@@ -69,9 +69,9 @@ void parse_file ( char * filename,
   char line[255];
   clear_screen(s);
   color c;
-  c.red = 255;
-  c.green = 0;
-  c.blue = 255;
+  c.red = 5;
+  c.green = 51;
+  c.blue = 112;
 
   if ( strcmp(filename, "stdin") == 0 )
     f = stdin;
@@ -160,12 +160,48 @@ void parse_file ( char * filename,
       display( s );
     }//end display
 
+    else if ( strncmp(line, "draw", strlen(line)) == 0 ) {
+      draw_lines(edges, s, c);
+      edges->lastcol = 0;
+    }//end display
+
+    else if ( strncmp(line, "circle", strlen(line)) == 0 ) {
+        fgets(line,sizeof(line),f);
+        double cx,cy,cz,r;
+        sscanf(line,"%lf %lf %lf %lf",&cx,&cy,&cz,&r);
+        add_circle(edges,cx,cy,cz,r,0.001);
+    }
+
+    else if ( strncmp(line, "color", strlen(line)) == 0 ) {
+        fgets(line,sizeof(line),f);
+        int r,g,b;
+        sscanf(line,"%d %d %d",&r,&g,&b);
+        c.red = r;
+        c.green = g;
+        c.blue = b;
+    }
+
+    else if ( strncmp(line, "hermite", strlen(line)) == 0 ) {
+        fgets(line,sizeof(line),f);
+        double x0, y0, x1, y1, rx0, ry0, rx1, ry1;
+        sscanf(line,"%lf %lf %lf %lf %lf %lf %lf %lf",&x0, &y0, &x1, &y1, &rx0, &ry0, &rx1, &ry1);
+        add_curve(edges,x0, y0, x1, y1, rx0, ry0, rx1, ry1,0.001,HERMITE);
+    }
+
+    else if ( strncmp(line, "bezier", strlen(line)) == 0 ) {
+        fgets(line,sizeof(line),f);
+        double x0, y0, x1, y1, x2, y2, x3, y3;
+        sscanf(line,"%lf %lf %lf %lf %lf %lf %lf %lf",&x0, &y0, &x1, &y1, &x2, &y2, &x3, &y3);
+        add_curve(edges,x0, y0, x1, y1, x2, y2, x3, y3,0.001,BEZIER);
+    }
+
+
     else if ( strncmp(line, "save", strlen(line)) == 0 ) {
       //printf("SAVE\t%s", line);
       fgets(line, sizeof(line), f);
       *strchr(line, '\n') = 0;
       //printf("name: %s\n", line);
-      clear_screen(s);
+     // clear_screen(s);
       draw_lines(edges, s, c);
       save_extension(s, line);
     }//end save

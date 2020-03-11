@@ -1,12 +1,68 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
 
 #include "ml6.h"
 #include "display.h"
 #include "draw.h"
 #include "matrix.h"
 
+
+
+
+void night_sky(){
+    int fd = open("night",O_CREAT | O_RDWR, 0644);
+    int n,z;
+    char line[256];
+    char * draw = "draw\n";
+    char * end = "save\nsky.png\nquit\n";
+    sprintf(line,"color\n%d %d %d\n",0,50,111);
+    //creates blue sky
+    write(fd,line,strlen(line));
+    for(n = 0; n < 500; n++){
+        sprintf(line,"line\n%d %d %d %d %d %d\n",0,n,0,XRES,n,0);
+        write(fd,line,strlen(line));
+    }
+    write(fd,draw,strlen(draw));
+    sprintf(line,"color\n%d %d %d\n",216,216,216);
+    write(fd,line,strlen(line));
+    //draws moon
+    for (n = 0; n < 50; n++){
+        sprintf(line,"circle\n%d %d %d %d\n",400,400,0,n);
+        write(fd,line,strlen(line));
+    }
+    //makes the moon glow
+    write(fd,draw,strlen(draw));
+    for (n = 0; n < 15; n++){
+        sprintf(line,"color\n%d %d %d\n",255 - n *14,255 - n * 13,255 - n);
+        write(fd,line,strlen(line));
+        sprintf(line,"circle\n%d %d %d %d\n",400,400,0,50 + n);
+        write(fd,line,strlen(line));
+        write(fd,draw,strlen(draw));
+    }
+    sprintf(line,"color\n%d %d %d\n",0,0,0);
+    write(fd,line,strlen(line));
+    z = rand() % 20;
+    for (n = 0; n < z; n ++){
+        int m, p;
+        m = rand() % 15;
+        for (p = 0; p < m; p++){
+            sprintf(line,"circle\n%d %d %d %d\n",400,400,0,p);
+            write(fd,line,strlen(line));
+        }
+        sprintf(line,"move\n%d %d %d\napply\n",rand() % 50,rand() % 50,0);
+        write(fd,line,strlen(line));
+        write(fd,draw,strlen(draw));
+    }
+    write(fd,end,strlen(end));
+    close(fd);
+}
 
 /*======== void add_circle() ==========
   Inputs:   struct matrix * edges
@@ -22,18 +78,15 @@ void add_circle( struct matrix *edges,
                  double r, double step ) {
                    double x,y,x1,y1,t;
                    t = 0.0;
-                   x = r * cos(M_PI * 2 * t) + cx;
-                   y = r * sin(M_PI * 2 * t) + cy;
                    while (t < 1){
                     x = r * cos(M_PI * 2 * t) + cx;
                     y = r * sin(M_PI * 2 * t) + cy;
-                    x1 = r * cos(M_PI * 2 * (t + step)) + cx;
-                    y1 = r * sin(M_PI * 2 * (t + step)) + cy;
-                    add_edge(edges,x,y,cz,x1,y1,cz);
                     t += step;
+                    x1 = r * cos(M_PI * 2 * t) + cx;
+                    y1 = r * sin(M_PI * 2 * t) + cy;
+                    add_edge(edges,x,y,cz,x1,y1,cz);
                    }
                    return;
-
 }
 
 /*======== void add_curve() ==========
@@ -54,12 +107,24 @@ of type specified in type (see matrix.h for curve type constants)
 to the matrix edges
 ====================*/
 void add_curve( struct matrix *edges,
-                double x0, double y0,
-                double x1, double y1,
-                double x2, double y2,
-                double x3, double y3,
-                double step, int type ) {
-                    return;
+    double x0, double y0,
+    double x1, double y1,
+    double x2, double y2,
+    double x3, double y3,
+    double step, int type ) {
+        struct matrix * coefsX = generate_curve_coefs(x0,x1,x2,x3,type);
+        struct matrix * coefsY = generate_curve_coefs(y0,y1,y2,y3,type);
+        double t,x,y,xNext,yNext;
+        t = 0.0;
+        while (t < 1){
+            x = coefsX->m[3][0] + t * (coefsX->m[2][0] + t * (coefsX->m[1][0] + t * coefsX->m[0][0]));
+            y = coefsY->m[3][0] + t * (coefsY->m[2][0] + t * (coefsY->m[1][0] + t * coefsY->m[0][0]));
+            t += step;
+            xNext = coefsX->m[3][0] + t * (coefsX->m[2][0] + t * (coefsX->m[1][0] + t * coefsX->m[0][0]));
+            yNext = coefsY->m[3][0] + t * (coefsY->m[2][0] + t * (coefsY->m[1][0] + t * coefsY->m[0][0]));
+            add_edge(edges,x,y,0,xNext,yNext,0);
+        }
+        return;
 }
 
 
